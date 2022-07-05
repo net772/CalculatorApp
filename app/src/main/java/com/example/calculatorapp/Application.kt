@@ -2,10 +2,7 @@ package com.example.calculatorapp
 
 import android.app.Application
 import android.content.Context
-import com.example.calculatorapp.di.coroutineModule
-import com.example.calculatorapp.di.dataBaseModule
-import com.example.calculatorapp.di.useCaseModule
-import com.example.calculatorapp.di.viewModelModule
+import com.example.calculatorapp.di.*
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -32,7 +29,8 @@ class Application: Application() {
                 coroutineModule,
                 useCaseModule,
                 viewModelModule,
-                dataBaseModule
+                dataBaseModule,
+                repositoryModule
             )
         }
     }

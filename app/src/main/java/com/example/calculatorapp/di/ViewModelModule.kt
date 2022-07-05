@@ -8,5 +8,5 @@ import org.koin.dsl.module
 
 val viewModelModule = module {
     viewModel { MainViewModel(androidApplication()) }
-    viewModel { CalculatorViewModel(androidApplication()) }
+    viewModel { CalculatorViewModel(androidApplication(), get(), get(), get()) }
 }

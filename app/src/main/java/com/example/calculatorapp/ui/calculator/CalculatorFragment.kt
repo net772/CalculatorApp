@@ -3,6 +3,7 @@ package com.example.calculatorapp.ui.calculator
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
@@ -12,6 +13,7 @@ import com.example.calculatorapp.databinding.FragmentCalculatorBinding
 import com.example.calculatorapp.ui.base.BaseFragment
 import com.example.calculatorapp.utility.extension.throttleFirstClick
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.lang.NumberFormatException
 
 class CalculatorFragment : BaseFragment<FragmentCalculatorBinding>() {
     companion object {
@@ -47,6 +49,9 @@ class CalculatorFragment : BaseFragment<FragmentCalculatorBinding>() {
         throttleFirstClick(buttonMulti) { operatorButtonClicked("*") }
         throttleFirstClick(buttonDivider) { operatorButtonClicked("/") }
         throttleFirstClick(buttonModulo) { operatorButtonClicked("%") }
+
+        throttleFirstClick(resultButton) { resultButtonClicked() }
+        throttleFirstClick(clearButton) { clearExpressionText() }
     }
 
     private fun numberButtonClicked(number: String) = with(binding) {
@@ -121,5 +126,39 @@ class CalculatorFragment : BaseFragment<FragmentCalculatorBinding>() {
         val data = input.trim()
         if (data.isEmpty()) return 0
         return data.toInt()
+    }
+
+    private fun resultButtonClicked() = with(binding) {
+        val expressionTexts = expressionTextView.text.split(" ")
+        val resultPossible = expressionTexts.size >= 3 && expressionTexts.size % 2 != 0
+
+        if (expressionTextView.text.isEmpty() || !resultPossible) {
+            Toast.makeText(requireContext(), "아직 완성되지 않은 수식입니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (expressionTexts[0].isNumber().not()) {
+            Toast.makeText(requireContext(), "아직 완성되지 않은 수식입니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        resultTextView
+        resultTextView.text = calc(expressionTextView.text.toString()).toString()
+    }
+
+    private fun clearExpressionText() = with(binding) {
+        expressionTextView.text = ""
+        resultTextView.text = ""
+        isOperator = false
+    }
+
+}
+
+fun String.isNumber(): Boolean {
+    return try {
+        this.toBigInteger()
+        true
+    } catch (e: NumberFormatException) {
+        false
     }
 }
