@@ -12,6 +12,7 @@ import com.example.calculatorapp.R
 import com.example.calculatorapp.databinding.FragmentCalculatorBinding
 import com.example.calculatorapp.ui.base.BaseFragment
 import com.example.calculatorapp.utility.extension.throttleFirstClick
+import com.example.data.db.entity.History
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.lang.NumberFormatException
 
@@ -142,8 +143,12 @@ class CalculatorFragment : BaseFragment<FragmentCalculatorBinding>() {
             return
         }
 
-        resultTextView
-        resultTextView.text = calc(expressionTextView.text.toString()).toString()
+        val expressionText = expressionTextView.text.toString()
+        val resultText = calc(expressionTextView.text.toString()).toString()
+
+        viewModel.insertHistory(History(null, expressionText, resultText))
+        resultTextView.text = resultText
+        Toast.makeText(requireContext(), "수식을 저장하였습니다.", Toast.LENGTH_SHORT).show()
     }
 
     private fun clearExpressionText() = with(binding) {

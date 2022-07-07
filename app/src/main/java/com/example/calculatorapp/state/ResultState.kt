@@ -1,15 +1,22 @@
-package com.example.calculator.state
+package com.example.calculatorapp.state
 
-sealed class ResultState<out T> {
+import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.flow.MutableStateFlow
 
-    object UnInitialize : ResultState<Nothing>()
+fun <T> mutableResultState(
+    uiState: ResultUiState<T> = ResultUiState.UnInitialize
+): MutableStateFlow<ResultUiState<T>> = MutableStateFlow(uiState)
 
-    object Loading : ResultState<Nothing>()
+fun <T> mutableResultLive(
+    uiState: ResultUiState<T> = ResultUiState.UnInitialize
+): MutableLiveData<ResultUiState<T>> = MutableLiveData(uiState)
 
-    data class Success<T>(val data: T) : ResultState<T>()
+sealed class ResultUiState<out T> {
 
-    data class Error(val error: Throwable) : ResultState<Nothing>()
-
-    object Finish : ResultState<Nothing>()
+    object UnInitialize : ResultUiState<Nothing>()
+    object Loading : ResultUiState<Nothing>()
+    data class Success<T>(val data: T) : ResultUiState<T>()
+    data class Error(val error: Throwable) : ResultUiState<Nothing>()
+    object Finish : ResultUiState<Nothing>()
 
 }

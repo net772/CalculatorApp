@@ -47,15 +47,15 @@ abstract class BaseFragment<Binding : ViewDataBinding> : Fragment() {
         observe(viewLifecycleOwner, observer)
     }
 
-    protected inline fun <T> Flow<T>.onResult(crossinline action: (T) -> Unit) {
+    protected fun <T> Flow<T>.onResult(action: (T) -> Unit) {
         collect(viewLifecycleOwner.lifecycleScope, action)
     }
 
-    protected inline fun <T> Flow<ResultUiState<T>>.onUiState(
-        crossinline loading: () -> Unit = {},
-        crossinline success: (T) -> Unit = {},
-        crossinline error: (Throwable) -> Unit = {},
-        crossinline finish: () -> Unit = {}
+    protected fun <T> Flow<ResultUiState<T>>.onUiState(
+        loading: () -> Unit = {},
+        success: (T) -> Unit = {},
+        error: (Throwable) -> Unit = {},
+        finish: () -> Unit = {}
     ) {
         onResult { state ->
             when (state) {

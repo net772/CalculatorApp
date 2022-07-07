@@ -3,8 +3,8 @@ package com.example.calculatorapp.ui.base
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.calculator.state.ResultState
 import com.example.calculatorapp.utility.KoinConstants
+import com.example.calculatorapp.utility.state.ResultUiState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import org.koin.core.component.KoinComponent
@@ -16,12 +16,13 @@ abstract class BaseViewModel(
 ) : AndroidViewModel(app), KoinComponent {
     private val ioDispatcher: CoroutineDispatcher by inject(named(KoinConstants.DISPATCHER_IO))
 
-    protected fun <T> Flow<T>.onState(collect: (ResultState<T>) -> Unit) {
+
+    protected fun <T> Flow<T>.onState(collect: (ResultUiState<T>) -> Unit) {
         flowOn(ioDispatcher)
-            .onCompletion { collect(ResultState.Finish) }
-            .onStart { collect(ResultState.Loading) }
-            .catch { collect(ResultState.Error(it)) }
-            .onEach { collect(ResultState.Success(it)) }
+            .onCompletion { collect(ResultUiState.Finish) }
+            .onStart { collect(ResultUiState.Loading) }
+            .catch { collect(ResultUiState.Error(it)) }
+            .onEach { collect(ResultUiState.Success(it)) }
             .launchIn(viewModelScope)
     }
 }

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface HistoryDao {
     @Query("SELECT * FROM history")
-    fun getAll(): Flow<List<History>>
+    suspend fun getAll(): List<History>
 
     @Insert
     suspend fun insertHistory(history: History)
