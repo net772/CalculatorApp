@@ -1,7 +1,6 @@
 package com.example.calculatorapp.ui.history
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.example.calculatorapp.ui.base.BaseViewModel
 import com.example.calculatorapp.utility.state.mutableResultState
@@ -22,7 +21,6 @@ class HistoryViewModel(
 
     fun getAllHistory() {
          getHistoryUseCase.invoke().onState {
-             Log.d("동현","213 : $it")
              _historyData.value = it
          }
     }
