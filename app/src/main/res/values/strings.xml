@@ -5,5 +5,5 @@
     <string name="calculator">계산기</string>
     <string name="history">기록</string>
 
-    <string name="replace_operation">%1s%2s</string>
+    <string name="replace_operation">%1s</string>
 </resources>

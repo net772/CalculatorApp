@@ -78,7 +78,7 @@ class CalculatorFragment : BaseFragment<FragmentCalculatorBinding>() {
         when {
             isOperator -> {
                 val text = expressionTextView.text.toString()
-                expressionTextView.text = getString(R.string.replace_operation, text.dropLast(1), operator)
+                expressionTextView.text = getString(R.string.replace_operation, text.dropLast(1) + operator)
             }
 
             else -> expressionTextView.append(" $operator")

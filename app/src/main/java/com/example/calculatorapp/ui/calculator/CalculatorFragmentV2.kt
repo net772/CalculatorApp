@@ -26,6 +26,7 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
     private val viewModel: CalculatorViewModel by viewModel()
 
     private var isOperator = false
+    private var isBracket = false
 
     override fun createFragmentBinding(inflater: LayoutInflater, container: ViewGroup?) =
         FragmentCalculatorBinding.inflate(inflater, container, false)
@@ -45,19 +46,18 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
         throttleFirstClick(button7) { numberButtonClicked("7") }
         throttleFirstClick(button8) { numberButtonClicked("8") }
         throttleFirstClick(button9) { numberButtonClicked("9") }
-
         throttleFirstClick(buttonPlus) { operatorButtonClicked("+") }
         throttleFirstClick(buttonMinus) { operatorButtonClicked("-") }
         throttleFirstClick(buttonMulti) { operatorButtonClicked("*") }
         throttleFirstClick(buttonDivider) { operatorButtonClicked("/") }
-        throttleFirstClick(buttonModulo) { operatorButtonClicked("%") }
-
+        throttleFirstClick(buttonModulo) {  }
+        throttleFirstClick(bracket) { bracketButtonClicked() }
         throttleFirstClick(resultButton) { resultButtonClicked() }
         throttleFirstClick(clearButton) { clearExpressionText() }
     }
 
     private fun numberButtonClicked(number: String) = with(binding) {
-        if (isOperator) expressionTextView.append(" ")
+        if (isOperator || expressionTextView.text.takeLast(1).toString() != " " && expressionTextView.text.isNotEmpty()) expressionTextView.append(" ")
 
         val expressionText = expressionTextView.text.split(" ")
 
@@ -67,19 +67,31 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
         }
 
         expressionTextView.append(number)
-        resultTextView.text = calc(test(expressionTextView.text.toString())).toString()
+
+        if (!isBracket) resultTextView.text = calc(test(expressionTextView.text.toString())).toString()
 
         isOperator = false
+    }
+
+    private fun bracketButtonClicked() = with(binding) {
+        isBracket = !isBracket
+        if (isBracket) {
+            val text = if (expressionTextView.text.isEmpty()) "( " else " ("
+            expressionTextView.append(text)
+        }
+        else {
+            expressionTextView.append(" )")
+            if(expressionTextView.text.takeLast(1).toString() == ")") resultTextView.text = calc(test(expressionTextView.text.toString())).toString()
+        }
     }
 
     private fun operatorButtonClicked(operator: String) = with(binding) {
         if (expressionTextView.text.isEmpty()) return
 
-
         when {
             isOperator -> {
                 val text = expressionTextView.text.toString()
-                expressionTextView.text = getString(R.string.replace_operation, text.dropLast(1), operator)
+                expressionTextView.text = getString(R.string.replace_operation, text.dropLast(1) + operator)
             }
 
             else -> expressionTextView.append(" $operator")
@@ -111,15 +123,21 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
                 val number = exp.toDouble()
                 expressionText += "$number "
             } catch (e: NumberFormatException) {
-                val priority = OperatorPriorityWithParentheses.findPriority(exp)
-                while (!operatorStack.isEmpty()) {
-                    val endInStack = operatorStack.peek()
-                    if (priority.getPriority() <= OperatorPriorityWithParentheses.findPriority(endInStack).getPriority()) { // 현재 우선순위가 더 높으면
-                        expressionText += operatorStack.pop() + " "
+                if (exp == "(") operatorStack.push("(")
+                else if (exp == ")") {
+                    while (!operatorStack.peek().equals("(")) expressionText += operatorStack.pop() + " "
+                    operatorStack.pop()
+                } else {
+                    val priority = OperatorPriorityWithParentheses.findPriority(exp)
+                    while (!operatorStack.isEmpty()) {
+                        val endInStack = operatorStack.peek()
+                        if (priority.getPriority() <= OperatorPriorityWithParentheses.findPriority(endInStack).getPriority()) { // 현재 우선순위가 더 높으면
+                            expressionText += operatorStack.pop() + " "
+                        }
+                        else break
                     }
-                    else break
+                    operatorStack.push(exp)
                 }
-                operatorStack.push(exp)
             }
         }
 
@@ -150,49 +168,25 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
         return numberStack.pop()
     }
 
-    enum class OperatorPriorityWithParentheses(_priority: Int, _operatorList: List<String>) {
-        PARENTHESES(0, listOf("(")),
-        PLUS_MINUS(1, listOf("+", "-")),
-        MULTI_DIVIDE(2, listOf("*", "/"));
-
-        private var priority: Int = _priority
-        private var operatorList: List<String> = _operatorList
-
-        companion object {
-            fun findPriority(operator: String): OperatorPriorityWithParentheses {
-                val a = values().filter { operatorPriority ->
-                    operatorPriority.hasOperation(operator)
-                }
-                return a.first()
-            }
-        }
-
-        private fun hasOperation(operator: String) : Boolean {
-            return operatorList.contains(operator)
-        }
-
-        fun getPriority() = priority
-    }
-
     private fun resultButtonClicked() = with(binding) {
-        val expressionTexts = expressionTextView.text.split(" ")
-        val resultPossible = expressionTexts.size >= 3 && expressionTexts.size % 2 != 0
-
-        if (expressionTextView.text.isEmpty() || !resultPossible) {
-            Toast.makeText(requireContext(), "아직 완성되지 않은 수식입니다.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (expressionTexts[0].isNumber().not()) {
-            Toast.makeText(requireContext(), "아직 완성되지 않은 수식입니다.", Toast.LENGTH_SHORT).show()
-            return
-        }
+//        val expressionTexts = expressionTextView.text.split(" ")
+//        val resultPossible = expressionTexts.size >= 3 && expressionTexts.size % 2 != 0
+//
+//        if (expressionTextView.text.isEmpty() || !resultPossible) {
+//            Toast.makeText(requireContext(), "아직 완성되지 않은 수식입니다.", Toast.LENGTH_SHORT).show()
+//            return
+//        }
+//
+//        if (expressionTexts[0].isNumber().not() && expressionTexts[0] != "(") {
+//            Toast.makeText(requireContext(), "아직 완성되지 않은 수식입니다.", Toast.LENGTH_SHORT).show()
+//            return
+//        }
 
         val expressionText = expressionTextView.text.toString()
-       // val resultText = calc(expressionTextView.text.toString()).toString()
+        val resultText = calc(test(expressionTextView.text.toString())).toString()
 
 //        viewModel.insertHistory(History(null, expressionText, resultText))
-//        resultTextView.text = resultText
+        resultTextView.text = resultText
 //        Toast.makeText(requireContext(), "수식을 저장하였습니다.", Toast.LENGTH_SHORT).show()
     }
 
@@ -201,6 +195,29 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
         resultTextView.text = ""
         isOperator = false
     }
+}
 
+enum class OperatorPriorityWithParentheses(_priority: Int, _operatorList: List<String>) {
+    PARENTHESES(0, listOf("(")),
+    PLUS_MINUS(1, listOf("+", "-")),
+    MULTI_DIVIDE(2, listOf("*", "/"));
+
+    private var priority: Int = _priority
+    private var operatorList: List<String> = _operatorList
+
+    companion object {
+        fun findPriority(operator: String): OperatorPriorityWithParentheses {
+            val op = values().filter { operatorPriority ->
+                operatorPriority.hasOperation(operator)
+            }
+            return op.first()
+        }
+    }
+
+    private fun hasOperation(operator: String) : Boolean {
+        return operatorList.contains(operator)
+    }
+
+    fun getPriority() = priority
 }
 
