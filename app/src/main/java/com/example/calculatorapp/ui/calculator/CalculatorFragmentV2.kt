@@ -57,19 +57,14 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
     }
 
     private fun numberButtonClicked(number: String) = with(binding) {
-        if (isOperator) expressionTextView.append(" ")
-        if (expressionTextView.text.takeLast(1).toString() == ")") expressionTextView.append(" ")
-        if (expressionTextView.text.takeLast(1).toString() == "(") expressionTextView.append(" ")
-        val expressionText = expressionTextView.text.split(" ")
-
-        if (expressionText.last().isEmpty() && number == "0") {
+        if (expressionTextView.text.isEmpty() && number == "0") {
             Toast.makeText(requireContext(), "0은 제일 앞에 올 수 없습니다.", Toast.LENGTH_SHORT).show()
             return
         }
+        if (expressionTextView.text.isEmpty()) expressionTextView.append(number) else expressionTextView.append(" $number")
 
-        expressionTextView.append(number)
-
-        if (!isBracket) resultTextView.text = calc(test(expressionTextView.text.toString())).toString()
+        val expressionText = expressionTextView.text.toString()
+        if (!isBracket) resultTextView.text = viewModel.calc(expressionText).toString()
 
         isOperator = false
     }
@@ -77,19 +72,28 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
     private fun bracketButtonClicked() = with(binding) {
         isBracket = !isBracket
         if (isBracket) {
-            val text = if (expressionTextView.text.isEmpty()) "( " else " ("
+            val text = when {
+                expressionTextView.text.isEmpty() -> "("
+                viewModel.checkLastStrNumber(expressionTextView.text.takeLast(1).toString()) -> {
+                    " * ("
+                }
+                else -> " ("
+            }
+
             expressionTextView.append(text)
+            operatorOverlapStringBuilder(expressionTextView.text.toString())
         }
         else {
             expressionTextView.append(" )")
-            if (expressionTextView.text.takeLast(1).toString() == ")") resultTextView.text = calc(test(expressionTextView.text.toString())).toString()
+            val expressionText = expressionTextView.text.toString()
+            if (expressionTextView.text.takeLast(1).toString() == ")") resultTextView.text = viewModel.calc(expressionText).toString()
         }
         isOperator = false
     }
 
     private fun operatorButtonClicked(operator: String) = with(binding) {
         if (expressionTextView.text.isEmpty()) return
-        if(expressionTextView.text.takeLast(1).toString() == "(" || expressionTextView.text.takeLast(2).toString() == "(") return
+        if (expressionTextView.text.takeLast(1).toString() == "(") return
         when {
             isOperator -> {
                 val text = expressionTextView.text.toString()
@@ -111,7 +115,9 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
         val idxList = mutableListOf<Int>()
 
         expressionList.forEachIndexed { idx, exp ->
-            opList.forEach { if(exp == it)  idxList.add(idx) }
+            opList.map {
+                if(exp == it)  idxList.add(idx)
+            }
         }
         setSpannableStringBuilder(idxList)
     }
@@ -130,62 +136,6 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
         expressionTextView.text = ssb
     }
 
-    private fun test(input: String) : List<String> {
-        val expressionList = input.split(" ")
-        var expressionText = ""
-        val operatorStack = Stack<String>()
-
-        for (exp in expressionList) {
-            try {
-                val number = exp.toDouble()
-                expressionText += "$number "
-            } catch (e: NumberFormatException) {
-                if (exp == "(") operatorStack.push("(")
-                else if (exp == ")") {
-                    while (!operatorStack.peek().equals("(")) expressionText += operatorStack.pop() + " "
-                    operatorStack.pop()
-                } else {
-                    val priority = OperatorPriorityWithParentheses.findPriority(exp)
-                    while (!operatorStack.isEmpty()) {
-                        val endInStack = operatorStack.peek()
-                        if (priority.getPriority() <= OperatorPriorityWithParentheses.findPriority(endInStack).getPriority()) { // 현재 우선순위가 더 높으면
-                            expressionText += operatorStack.pop() + " "
-                        }
-                        else break
-                    }
-                    operatorStack.push(exp)
-                }
-            }
-        }
-
-         while (!operatorStack.isEmpty()) expressionText += operatorStack.pop() + " ";
-
-        return expressionText.trim().split(" ")
-    }
-
-    private fun calc(stackExpressionStr: List<String>) : Double {
-        val numberStack = Stack<Double>()
-
-        for (exp in stackExpressionStr) {
-            try {
-                val number = exp.toDouble()
-                numberStack.push(number)
-            }  catch (e: NumberFormatException) {
-                if (numberStack.size < 2) return 0.0
-                val num1 = numberStack.pop()
-                val num2 = numberStack.pop()
-
-                when (exp) {
-                    "+" -> numberStack.push(num2 + num1)
-                    "-" -> numberStack.push(num2 - num1)
-                    "*" -> numberStack.push(num2 * num1)
-                    "/" -> numberStack.push(num2 / num1)
-                }
-            }
-        }
-        return numberStack.pop()
-    }
-
     private fun resultButtonClicked() = with(binding) {
 //        val expressionTexts = expressionTextView.text.split(" ")
 //        val resultPossible = expressionTexts.size >= 3 && expressionTexts.size % 2 != 0
@@ -201,7 +151,7 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
 //        }
 
         val expressionText = expressionTextView.text.toString()
-        val resultText = calc(test(expressionTextView.text.toString())).toString()
+        val resultText = viewModel.calc(expressionText).toString()
 
 //        viewModel.insertHistory(History(null, expressionText, resultText))
         resultTextView.text = resultText
@@ -216,13 +166,11 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
     }
 }
 
-enum class OperatorPriorityWithParentheses(_priority: Int, _operatorList: List<String>) {
+enum class OperatorPriorityWithParentheses(private val priority: Int, private val operatorList: List<String>) {
     PARENTHESES(0, listOf("(")),
     PLUS_MINUS(1, listOf("+", "-")),
     MULTI_DIVIDE(2, listOf("*", "/"));
 
-    private var priority: Int = _priority
-    private var operatorList: List<String> = _operatorList
 
     companion object {
         fun findPriority(operator: String): OperatorPriorityWithParentheses {
@@ -234,9 +182,9 @@ enum class OperatorPriorityWithParentheses(_priority: Int, _operatorList: List<S
     }
 
     private fun hasOperation(operator: String) : Boolean {
-        return operatorList.contains(operator)
+        return this.operatorList.contains(operator)
     }
 
-    fun getPriority() = priority
+    fun getPriority() = this.priority
 }
 
