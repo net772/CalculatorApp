@@ -57,8 +57,9 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
     }
 
     private fun numberButtonClicked(number: String) = with(binding) {
-        if (isOperator || expressionTextView.text.takeLast(1).toString() != " " && expressionTextView.text.isNotEmpty()) expressionTextView.append(" ")
-
+        if (isOperator) expressionTextView.append(" ")
+        if (expressionTextView.text.takeLast(1).toString() == ")") expressionTextView.append(" ")
+        if (expressionTextView.text.takeLast(1).toString() == "(") expressionTextView.append(" ")
         val expressionText = expressionTextView.text.split(" ")
 
         if (expressionText.last().isEmpty() && number == "0") {
@@ -81,34 +82,50 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
         }
         else {
             expressionTextView.append(" )")
-            if(expressionTextView.text.takeLast(1).toString() == ")") resultTextView.text = calc(test(expressionTextView.text.toString())).toString()
+            if (expressionTextView.text.takeLast(1).toString() == ")") resultTextView.text = calc(test(expressionTextView.text.toString())).toString()
         }
+        isOperator = false
     }
 
     private fun operatorButtonClicked(operator: String) = with(binding) {
         if (expressionTextView.text.isEmpty()) return
-
+        if(expressionTextView.text.takeLast(1).toString() == "(" || expressionTextView.text.takeLast(2).toString() == "(") return
         when {
             isOperator -> {
                 val text = expressionTextView.text.toString()
                 expressionTextView.text = getString(R.string.replace_operation, text.dropLast(1) + operator)
+                operatorOverlapStringBuilder(expressionTextView.text.toString())
+                return
             }
 
             else -> expressionTextView.append(" $operator")
         }
 
-        setSpannableStringBuilder()
+        setSpannableStringBuilder(mutableListOf(expressionTextView.text.length - 1))
         isOperator = true
     }
 
-    private fun setSpannableStringBuilder() = with(binding) {
+    private fun operatorOverlapStringBuilder(input: String) = with(binding) {
+        val opList = listOf('+', '-', '*', '/')
+        val expressionList = input.toList()
+        val idxList = mutableListOf<Int>()
+
+        expressionList.forEachIndexed { idx, exp ->
+            opList.forEach { if(exp == it)  idxList.add(idx) }
+        }
+        setSpannableStringBuilder(idxList)
+    }
+
+    private fun setSpannableStringBuilder(idxList: MutableList<Int>) = with(binding) {
         val ssb = SpannableStringBuilder(expressionTextView.text)
-        ssb.setSpan(
-            ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.green)),
-            expressionTextView.text.length - 1,
-            expressionTextView.text.length,
-            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
+        for (startIdx in idxList) {
+            ssb.setSpan(
+                ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.green)),
+                startIdx,
+                startIdx + 1,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
 
         expressionTextView.text = ssb
     }
@@ -154,6 +171,7 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
                 val number = exp.toDouble()
                 numberStack.push(number)
             }  catch (e: NumberFormatException) {
+                if (numberStack.size < 2) return 0.0
                 val num1 = numberStack.pop()
                 val num2 = numberStack.pop()
 
@@ -194,6 +212,7 @@ class CalculatorFragmentV2 : BaseFragment<FragmentCalculatorBinding>() {
         expressionTextView.text = ""
         resultTextView.text = ""
         isOperator = false
+        isBracket = false
     }
 }
 
