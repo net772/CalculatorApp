@@ -6,4 +6,5 @@
     <string name="history">기록</string>
 
     <string name="replace_operation">%1s</string>
+    <string name="btn_remove">삭제</string>
 </resources>

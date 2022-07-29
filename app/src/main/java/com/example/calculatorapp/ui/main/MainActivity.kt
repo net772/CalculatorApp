@@ -4,6 +4,7 @@ import androidx.fragment.app.Fragment
 import com.example.calculatorapp.R
 import com.example.calculatorapp.databinding.ActivityMainBinding
 import com.example.calculatorapp.ui.base.BaseActivity
+import com.example.calculatorapp.ui.calculator.CalculatorFragment
 import com.example.calculatorapp.ui.calculator.CalculatorFragmentV2
 import com.example.calculatorapp.ui.history.HistoryFragment
 import com.example.calculatorapp.utility.extension.replaceFragment
@@ -22,7 +23,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     private fun initView() = with(binding) {
         bottomNav.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.menu_calculator -> showFragment(CalculatorFragmentV2.newInstance())
+                R.id.menu_calculator -> showFragment(CalculatorFragment.newInstance())
                 R.id.menu_history -> showFragment(HistoryFragment.newInstance())
             }
             true

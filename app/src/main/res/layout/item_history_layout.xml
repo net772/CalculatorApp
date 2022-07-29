@@ -26,9 +26,9 @@
             android:gravity="end"
             android:textColor="@color/black"
             android:textSize="30sp"
+            app:layout_constraintEnd_toStartOf="@+id/btnRemove"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             tools:text="9999" />
 
         <TextView
@@ -42,9 +42,22 @@
             android:textSize="20sp"
             app:layout_constraintTop_toBottomOf="@id/expressionTextView"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnRemove"
             app:layout_constraintBottom_toBottomOf="parent"
             tools:text="9999" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnRemove"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15dp"
+            android:textStyle="bold"
+            android:textColor="@color/colorWhite"
+            android:background="@drawable/bg_history_remove_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/expressionTextView"
+            app:layout_constraintBottom_toBottomOf="@+id/resultTextView"
+            android:text="@string/btn_remove"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
